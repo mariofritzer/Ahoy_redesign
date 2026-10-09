@@ -827,6 +827,16 @@
                     "token": "GRAPH_RATIO_NOTE",
                     "en": "The display alternates every 15 s between the main page and the day curve. 0 = main page only, 100 = curve only, 30 = approx. 10 s values / 5 s curve.",
                     "de": "Das Display wechselt im 15-Sekunden-Takt zwischen Hauptseite und Tageskurve. 0 = nur Hauptseite, 100 = nur Kurve, 30 = ca. 10 s Werte / 5 s Kurve."
+                },
+                {
+                    "token": "DISP_IP_TIME",
+                    "en": "IP / time change (s)",
+                    "de": "Wechsel IP / Uhrzeit (s)"
+                },
+                {
+                    "token": "DISP_IP_TIME_NOTE",
+                    "en": "The status bar alternates between IP address and time, each for this many seconds. 0 = time only (IP is still shown while the time is unknown).",
+                    "de": "Die Statusleiste zeigt abwechselnd IP-Adresse und Uhrzeit, jeweils so viele Sekunden lang. 0 = nur Uhrzeit (solange die Uhrzeit unbekannt ist, wird trotzdem die IP gezeigt)."
                 }
             ]
         },

@@ -24,6 +24,17 @@ class DisplayMono128X64 : public DisplayMono {
             mCfg = cfg;
         }
 
+        // called every second: refresh at once when the status bar switches between IP and time
+        bool loop(bool motion) override {
+            bool refresh = DisplayMono::loop(motion);
+            bool phase = ipPhase();
+            if (phase != mLastIpPhase) {
+                mLastIpPhase = phase;
+                refresh = true;
+            }
+            return refresh;
+        }
+
         void init(DisplayData *displayData) override {
             u8g2_cb_t *rot = (u8g2_cb_t *)(( mCfg->rot != 0x00) ? U8G2_R2 : U8G2_R0);
             switch (mCfg->type) {
@@ -71,6 +82,16 @@ class DisplayMono128X64 : public DisplayMono {
         }
 
     private:
+        bool mLastIpPhase = false;
+
+        // true while the status bar should show the IP address (equal time slots: N s IP, N s time)
+        bool ipPhase(void) {
+            uint8_t t = mCfg->ipTime;
+            if (0 == t)
+                return false;
+            return (1 == ((millis() / 1000UL / t) % 2));
+        }
+
         static constexpr uint8_t pixelShiftRange = 11;  // number of pixels to shift from left to right (centered -> must be odd!)
         uint8_t widthShrink = 0;
 
@@ -140,7 +161,7 @@ class DisplayMono128X64 : public DisplayMono {
         // status bar: time (or IP) on the left, radio / WiFi / MQTT on the right
         void drawStatusBar(void) {
             mDisplay->setFont(u8g2_font_helvB08_tr);
-            bool showIp = (0 == mDisplayData->utcTs) || (0 == (mExtra % 8));
+            bool showIp = (0 == mDisplayData->utcTs) || ipPhase();
             if (showIp && (mDisplayData->ipAddress != IPAddress(0, 0, 0, 0)))
                 snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%s", mDisplayData->ipAddress.toString().c_str());
             else if (0 != mDisplayData->utcTs)

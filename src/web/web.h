@@ -623,6 +623,8 @@ class Web {
                                                 || (mConfig->plugin.display.type == DISP_TYPE_T2_SH1106_128X64)
                                                 || (mConfig->plugin.display.type == DISP_TYPE_T3_PCD8544_84X48)
                                                 || (mConfig->plugin.display.type == DISP_TYPE_T6_SSD1309_128X64)) ? request->arg("disp_graph_ratio").toInt() : 0;
+            if (request->hasArg("disp_ip_time"))
+                mConfig->plugin.display.ipTime  = std::min(60L, std::max(0L, (long)request->arg("disp_ip_time").toInt()));
 
                                                                                            // available pins according pinMap in setup.html, otherwise default value
             mConfig->plugin.display.disp_data   = (mConfig->plugin.display.type == DISP_TYPE_T0_NONE) ? DEF_PIN_OFF : request->arg("disp_data").toInt();

@@ -303,6 +303,11 @@
                                     <div class="col-12 col-sm-9"><input type="number" name="disp_graph_ratio" min="0" max="100"></div>
                                     <div class="col-12 subsubdes mt-1">{#GRAPH_RATIO_NOTE}</div>
                                 </div>
+                                <div class="row mb-3">
+                                    <div class="col-12 col-sm-3 my-2">{#DISP_IP_TIME}</div>
+                                    <div class="col-12 col-sm-9"><input type="number" name="disp_ip_time" min="0" max="60"></div>
+                                    <div class="col-12 subsubdes mt-1">{#DISP_IP_TIME_NOTE}</div>
+                                </div>
                                 <div id="graphSize"></div>
                             </div>
                         </fieldset>
@@ -1283,6 +1288,7 @@
                 });
 
                 document.getElementsByName("disp_graph_ratio")[0].value = obj["disp_graph_ratio"];
+                document.getElementsByName("disp_ip_time")[0].value = (undefined !== obj["disp_ip_time"]) ? obj["disp_ip_time"] : 5;
 
                 var opts2 = [[0, "{#GRAPH_LINES_1_2}"], [1, "{#GRAPH_LINES_2_3}"], [2, "{#GRAPH_LINES_1_3}"], [3, "{#GRAPH_LINES_2_4}"], [4, "{#GRAPH_LINES_1_4}"]];
                 var graph_size_sel = sel("disp_graph_size", opts2, obj["disp_graph_size"]);
