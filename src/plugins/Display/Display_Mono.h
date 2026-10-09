@@ -61,6 +61,19 @@ class DisplayMono {
             return(monoMaintainDispSwitchState());  // return flag, if display content should be updated immediately
         }
 
+#ifdef DISPLAY_PREVIEW_HOST
+        // only used by the PC preview tool (tools/display_preview), never compiled into the firmware
+        void previewSetCurve(const float *vals, uint8_t lastPos, uint32_t start, uint32_t end) {
+            if (nullptr == mPgData) return;
+            for (uint8_t i = 0; i < mPgWidth; i++) mPgData[i] = (i <= lastPos) ? vals[i] : 0.0f;
+            mPgMaxPwr = 0;
+            for (uint8_t i = 0; i <= lastPos; i++) mPgMaxPwr = std::max(mPgMaxPwr, vals[i]);
+            mPgLastPos = lastPos; mPgLastTime = start + 1; mPgStartTime = start; mPgEndTime = end;
+            mPgPeriod = end - start; mPgState = PowerGraphState::IN_PERIOD;
+        }
+        void previewSetSwitchState(bool graph) { mDispSwitchState = graph ? DispSwitchState::GRAPH : DispSwitchState::TEXT; }
+#endif
+
     protected:
         enum class DispSwitchState {
             TEXT,
@@ -222,6 +235,76 @@ class DisplayMono {
             mDisplay->drawStr(xoff + 3, yoff - mPgHeight + 5, mFmtText);
         }
 
+        //---------------------------------------------------------------------
+        // modern day curve: dithered area under the power curve, solid top
+        // edge, marker at the current value and a dotted line for the rest of
+        // the day. Spans the whole sunrise..sunset period over mPgWidth pixels.
+        //   xoff    ... left edge
+        //   yBase   ... baseline (bottom) y position
+        //   height  ... maximum curve height in pixels
+        //   density ... 0 = light (25 %) dither, 1 = medium (50 %) dither
+        //---------------------------------------------------------------------
+        void plotDayCurve(int16_t xoff, uint8_t yBase, uint8_t height, uint8_t density, bool marker) {
+            if (nullptr == mPgData)
+                return;
+
+            bool hasData = (mPgLastPos > 0) && (mPgMaxPwr >= 1) && (0 != mPgStartTime);
+            uint8_t last = hasData ? mPgLastPos : 0;
+
+            // dotted baseline for the part of the day that is still to come
+            for (uint8_t x = last; x < mPgWidth; x += 2)
+                mDisplay->drawPixel(xoff + x, yBase);
+
+            if (!hasData)
+                return;
+
+            // solid baseline below the curve
+            mDisplay->drawHLine(xoff, yBase, last + 1);
+
+            uint8_t prevY = yBase - curveY(0, height);
+            for (uint8_t x = 0; x <= last; x++) {
+                uint8_t yTop = yBase - curveY(x, height);
+
+                // dithered area fill below the top edge
+                for (uint8_t y = yTop + 1; y < yBase; y++) {
+                    bool on = (0 == density)
+                        ? ((0 == (y & 1)) && (0 == ((x + (y >> 1)) & 1)))  // 25 %
+                        : (0 == ((x + y) & 1));                           // 50 %
+                    if (on)
+                        mDisplay->drawPixel(xoff + x, y);
+                }
+
+                // solid top edge
+                if (x > 0)
+                    mDisplay->drawLine(xoff + x - 1, prevY, xoff + x, yTop);
+                else
+                    mDisplay->drawPixel(xoff, yTop);
+                prevY = yTop;
+            }
+
+            if (marker) {
+                // "now" marker: filled dot with a dark ring around it
+                int16_t mx = xoff + last;
+                uint8_t my = yBase - curveY(last, height);
+                mDisplay->setDrawColor(0);
+                mDisplay->drawDisc(mx, my, 3);
+                mDisplay->setDrawColor(1);
+                mDisplay->drawDisc(mx, my, 2);
+            }
+        }
+
+        // x pixel (relative) of a given local timestamp inside the curve, -1 if outside
+        int16_t dayCurveXofTime(uint32_t ts) {
+            if ((0 == mPgPeriod) || (ts < mPgStartTime) || (ts > mPgEndTime))
+                return -1;
+            return sss2PgPos(ts - mPgStartTime);
+        }
+
+        inline bool     dayCurveHasData(void)  { return (nullptr != mPgData) && (mPgLastPos > 0) && (mPgMaxPwr >= 1); }
+        inline float    dayCurveMaxPower(void) { return mPgMaxPwr; }
+        inline uint32_t dayCurveStart(void)    { return mPgStartTime; }
+        inline uint32_t dayCurveEnd(void)      { return mPgEndTime; }
+
     private:
         bool monoMaintainDispSwitchState(void) {
           bool change = false;
@@ -270,6 +353,16 @@ class DisplayMono {
                 return((p * (mPgWidth - 1)) / mPgLastPos);  // scaling of x-axis
             else
                 return 0;
+        }
+
+        // curve height in pixels for data point p (10 % headroom above the day maximum)
+        uint8_t curveY(uint8_t p, uint8_t height) {
+            if ((p >= mPgWidth) || (mPgMaxPwr < 1))
+                return 0;
+            float h = mPgData[p] * (float)height / (mPgMaxPwr * 1.1f);
+            if (h < 0) h = 0;
+            if (h > height) h = height;
+            return (uint8_t)(h + 0.5f);
         }
 
         // get Y-position of power graph, scaled to maximum value, by according datapoint index

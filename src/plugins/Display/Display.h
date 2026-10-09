@@ -187,8 +187,18 @@ class Display {
                 mDisplayData.utcTs = gTimezone.toLocal(utc);
             else
                 mDisplayData.utcTs = 0;
-            mDisplayData.pGraphStartTime = gTimezone.toLocal(mApp->getSunrise());
-            mDisplayData.pGraphEndTime = gTimezone.toLocal(mApp->getSunset());
+            if ((0 != mApp->getSunrise()) && (0 != mApp->getSunset())) {
+                mDisplayData.pGraphStartTime = gTimezone.toLocal(mApp->getSunrise());
+                mDisplayData.pGraphEndTime = gTimezone.toLocal(mApp->getSunset());
+            } else if (0 != mDisplayData.utcTs) {
+                // no coordinates configured -> fixed period 05:00 .. 21:00 local time for the day curve
+                uint32_t midnight = mDisplayData.utcTs - (mDisplayData.utcTs % 86400UL);
+                mDisplayData.pGraphStartTime = midnight + 5UL * 3600UL;
+                mDisplayData.pGraphEndTime = midnight + 21UL * 3600UL;
+            } else {
+                mDisplayData.pGraphStartTime = 0;
+                mDisplayData.pGraphEndTime = 0;
+            }
 
             if (mMono ) {
                 mMono->disp();
