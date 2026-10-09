@@ -92,9 +92,9 @@ class DisplayMono128X64 : public DisplayMono {
         void drawSplash(void) {
             mDisplay->clearBuffer();
             mDisplay->drawXBMP((mDispWidth - ICON_SUN_BIG_W) / 2, 4, ICON_SUN_BIG_W, ICON_SUN_BIG_H, icon_sun_big);
-            mDisplay->setFont(u8g2_font_helvB12_tr);
+            mDisplay->setFont(u8g2_font_helvB10_tr);
             drawCentered("AhoyDTU", mDispWidth / 2, 40);
-            mDisplay->setFont(u8g2_font_helvR08_tr);
+            mDisplay->setFont(u8g2_font_helvB08_tr);
             snprintf(mFmtText, DISP_FMT_TEXT_LEN, "Version %s", (nullptr != mDisplayData->version) ? mDisplayData->version : "");
             drawCentered(mFmtText, mDispWidth / 2, 56);
             mDisplay->sendBuffer();
@@ -222,14 +222,14 @@ class DisplayMono128X64 : public DisplayMono {
                          ((mDisplayData->utcTs < mDisplayData->pGraphStartTime) ||
                           (mDisplayData->utcTs > mDisplayData->pGraphEndTime));
 
-            mDisplay->setFont(u8g2_font_helvB12_tr);
+            mDisplay->setFont(u8g2_font_helvB10_tr);
             const char *title = night ? "Nachtruhe" : "Offline";
             uint8_t w = mDisplay->getStrWidth(title) + ICON_MOON_W + 5;
             int16_t x = xc() - w / 2;
             drawHaloXBM(x, 15, ICON_MOON_W, ICON_MOON_H, icon_moon);
             drawHaloStr(x + ICON_MOON_W + 5, 27, title, 2);
 
-            mDisplay->setFont(u8g2_font_helvR08_tr);
+            mDisplay->setFont(u8g2_font_helvB08_tr);
             if (night && (0 != mDisplayData->pGraphStartTime) && (mDisplayData->utcTs < mDisplayData->pGraphStartTime))
                 snprintf(mFmtText, DISP_FMT_TEXT_LEN, "Sonnenaufgang %02d:%02d", hour(mDisplayData->pGraphStartTime), minute(mDisplayData->pGraphStartTime));
             else if (night)
@@ -297,7 +297,7 @@ class DisplayMono128X64 : public DisplayMono {
             }
 
             // peak value (right, below status bar)
-            mDisplay->setFont(u8g2_font_helvR08_tr);
+            mDisplay->setFont(u8g2_font_helvB08_tr);
             if (dayCurveHasData()) {
                 float mx = dayCurveMaxPower();
                 if (mx >= 1000.0f) snprintf(mFmtText, DISP_FMT_TEXT_LEN, "Max %.2f kW", mx / 1000.0f);

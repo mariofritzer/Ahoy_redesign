@@ -53,12 +53,15 @@ jobs:
           BIN=out/$(date -u +%y%m%d)_ahoy_${V}_$(git rev-parse --short HEAD)_${{ matrix.variant }}.bin
           cp src/.pio/build/${{ matrix.variant }}/firmware.bin $BIN
           SIZE=$(stat -c %s "$BIN")
-          MAX=1310720   # app partition of the lolin_d32 default partition table (0x140000)
+          # OTA limit of the running Ahoy firmware: Update.begin((FreeSketchSpace - 0x1000) & 0xFFFFF000)
+          # app partition of the lolin_d32 default table is 0x140000 -> 0x13F000 = 1306624 bytes
+          MAX=1306624
           PCT=$(( SIZE * 100 / MAX ))
           FLASH=$(grep -E "^(RAM|Flash):" build.log | tr '\n' ' ')
           echo "::notice title=${{ matrix.variant }}::firmware.bin ${SIZE} of ${MAX} bytes (${PCT}%) | ${FLASH}"
           echo "### ${{ matrix.variant }}: ${SIZE} / ${MAX} Bytes (${PCT} %)" >> $GITHUB_STEP_SUMMARY
-          if [ $SIZE -gt $MAX ]; then echo "::error::firmware too large for OTA partition"; exit 1; fi
+          if [ $SIZE -gt $MAX ]; then echo "::error::firmware too large for OTA update (${SIZE} > ${MAX})"; exit 1; fi
+          if [ $SIZE -gt $(( MAX - 8192 )) ]; then echo "::error::less than 8 KB OTA reserve (${SIZE} of ${MAX})"; exit 1; fi
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
