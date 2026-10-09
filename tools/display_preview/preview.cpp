@@ -129,5 +129,22 @@ int main() {
     dd.WifiSymbol = false; dd.RadioSymbol = true; dd.RadioRSSI = -75; dd.APSymbol = true; dd.MQTTSymbol = false; dd.utcTs = at(11, 17);
     p.previewSetCurve(curve, posOf(dd.utcTs), dd.pGraphStartTime, dd.pGraphEndTime);
     p.disp(); savePbm(p.u8(), "08_kein_wlan.pbm");
+
+    // 9..12) yield row with extreme values, with and without pixel shift screensaver
+    dd.WifiSymbol = true; dd.APSymbol = false; dd.MQTTSymbol = true; dd.nrProducing = 2; dd.totalPower = 1243; dd.utcTs = at(13, 24);
+    p.previewSetCurve(curve, posOf(dd.utcTs), dd.pGraphStartTime, dd.pGraphEndTime);
+    dd.totalYieldDay = 9990; dd.totalYieldTotal = 9990;
+    p.disp(); savePbm(p.u8(), "09_ertrag_normal.pbm");
+    dd.totalYieldDay = 123400; dd.totalYieldTotal = 99900;
+    p.disp(); savePbm(p.u8(), "10_ertrag_gross.pbm");
+    dd.totalYieldDay = 123400; dd.totalYieldTotal = 999900;
+    p.disp(); savePbm(p.u8(), "11_ertrag_extrem.pbm");
+    {
+        display_t cfg2 = cfg; cfg2.screenSaver = 1;
+        Probe q; q.config(&cfg2); q.init(&dd);
+        q.previewSetCurve(curve, posOf(dd.utcTs), dd.pGraphStartTime, dd.pGraphEndTime);
+        dd.totalYieldDay = 9990; dd.totalYieldTotal = 9990;
+        gMillis = 0; q.disp(); savePbm(q.u8(), "12_ertrag_bildversatz.pbm");
+    }
     return 0;
 }

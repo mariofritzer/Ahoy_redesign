@@ -311,27 +311,53 @@ class DisplayMono128X64 : public DisplayMono {
             mDisplay->drawBox(0, Y_CURVE_MAIN + 1, mDispWidth, mDisplay->getDisplayHeight() - Y_CURVE_MAIN - 1);
             mDisplay->setDrawColor(1);
 
-            mDisplay->setFont(u8g2_font_helvB08_tr);
+            // the two values must never touch: try normal precision, then without decimals,
+            // then a smaller font (pixel shift screensaver makes the row 11 px narrower)
+            char day[16], tot[16];
+            const int16_t avail = x1() - x0() + 1;
+            uint8_t level = 0;
+            for (; level < 3; level++) {
+                formatYieldDay(day, sizeof(day), mDisplayData->totalYieldDay, level > 0);
+                formatYieldTotal(tot, sizeof(tot), mDisplayData->totalYieldTotal, level > 0);
+                mDisplay->setFont((level < 2) ? u8g2_font_helvB08_tr : u8g2_font_5x7_tr);
+                int16_t need = 1 + ICON_SUN_W + 2 + mDisplay->getStrWidth(day) + 4
+                             + ICON_SIGMA_W + 2 + mDisplay->getStrWidth(tot) + 1;
+                if (need <= avail)
+                    break;
+            }
 
             // day yield (left)
-            float yd = mDisplayData->totalYieldDay;   // Wh
-            if (yd >= 10000.0f)      snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%.1f kWh", yd / 1000.0f);
-            else if (yd >= 1000.0f)  snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%.2f kWh", yd / 1000.0f);
-            else                     snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%.0f Wh", yd);
-            decimalComma(mFmtText);
             mDisplay->drawXBMP(x0() + 1, Y_BOTTOM - 8, ICON_SUN_W, ICON_SUN_H, icon_sun);
-            mDisplay->drawStr(x0() + ICON_SUN_W + 3, Y_BOTTOM, mFmtText);
+            mDisplay->drawStr(x0() + ICON_SUN_W + 3, Y_BOTTOM, day);
 
             // total yield (right aligned)
-            float yt = mDisplayData->totalYieldTotal; // kWh
-            if (yt >= 10000.0f)      snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%.1f MWh", yt / 1000.0f);
-            else if (yt >= 1000.0f)  snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%.2f MWh", yt / 1000.0f);
-            else                     snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%.0f kWh", yt);
-            decimalComma(mFmtText);
-            int16_t w = mDisplay->getStrWidth(mFmtText);
-            int16_t xr = x1() - w;
-            mDisplay->drawStr(xr, Y_BOTTOM, mFmtText);
+            int16_t xr = x1() - mDisplay->getStrWidth(tot);
+            mDisplay->drawStr(xr, Y_BOTTOM, tot);
             mDisplay->drawXBMP(xr - ICON_SIGMA_W - 2, Y_BOTTOM - 8, ICON_SIGMA_W, ICON_SIGMA_H, icon_sigma);
+        }
+
+        // day yield in Wh -> "412 Wh", "9,99 kWh", "12,3 kWh" (short: no decimals)
+        static void formatYieldDay(char *buf, size_t len, float wh, bool shortFmt) {
+            if (wh >= 1000.0f) {
+                float k = wh / 1000.0f;
+                if (shortFmt || (k >= 100.0f)) snprintf(buf, len, "%.0f kWh", k);
+                else if (k >= 10.0f)           snprintf(buf, len, "%.1f kWh", k);
+                else                           snprintf(buf, len, "%.2f kWh", k);
+            } else
+                snprintf(buf, len, "%.0f Wh", wh);
+            decimalComma(buf);
+        }
+
+        // total yield in kWh -> "999 kWh", "2,84 MWh", "123,4 MWh" (short: no decimals)
+        static void formatYieldTotal(char *buf, size_t len, float kwh, bool shortFmt) {
+            if (kwh >= 1000.0f) {
+                float m = kwh / 1000.0f;
+                if (shortFmt || (m >= 1000.0f)) snprintf(buf, len, "%.0f MWh", m);
+                else if (m >= 10.0f)            snprintf(buf, len, "%.1f MWh", m);
+                else                            snprintf(buf, len, "%.2f MWh", m);
+            } else
+                snprintf(buf, len, "%.0f kWh", kwh);
+            decimalComma(buf);
         }
 
         //---------------------------------------------------------------------
