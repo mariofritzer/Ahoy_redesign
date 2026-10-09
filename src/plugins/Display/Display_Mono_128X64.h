@@ -164,8 +164,12 @@ class DisplayMono128X64 : public DisplayMono {
                 drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_mid,   wl >= 3);
                 drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_outer, wl >= 4);
             } else {
-                x += ICON_WIFI_DOT_W;
-                x = problemBadge(x, "WLAN");   // no WiFi connection
+                // no WiFi connection: full icon, struck through
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_dot,   true);
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_in,    true);
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_mid,   true);
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_outer, true);
+                strikeThrough(x, ICON_WIFI_DOT_W);
             }
 
             // hotspot (access point) active: "AP" in a rounded frame
@@ -200,7 +204,12 @@ class DisplayMono128X64 : public DisplayMono {
                 x -= ICON_ANTENNA_W + 1;
                 mDisplay->drawXBMP(x, 0, ICON_ANTENNA_W, ICON_ANTENNA_H, icon_antenna);
             } else {
-                x = problemBadge(xBars + 4 * 3 - 1, "FUNK");   // radio module not found / not working
+                // radio module not found / not working: antenna + empty bars, struck through
+                for (uint8_t i = 0; i < 4; i++)
+                    mDisplay->drawBox(x + i * 3, 9, 2, 1);
+                x -= ICON_ANTENNA_W + 1;
+                mDisplay->drawXBMP(x, 0, ICON_ANTENNA_W, ICON_ANTENNA_H, icon_antenna);
+                strikeThrough(x - 1, ICON_ANTENNA_W + 2);
             }
 
             // some inverters sleeping: framed badge "producing/total"
@@ -215,17 +224,15 @@ class DisplayMono128X64 : public DisplayMono {
             }
         }
 
-        // inverted rounded badge with a short word, right edge at xRight (= problem)
-        // returns the new left edge
-        int16_t problemBadge(int16_t xRight, const char *txt) {
-            mDisplay->setFont(u8g2_font_5x7_tr);
-            uint8_t w = mDisplay->getStrWidth(txt) + 5;
-            int16_t x = xRight - w + 1;
-            mDisplay->drawRBox(x, 0, w, 10, 2);
+        // diagonal strike through an icon (bottom left -> top right) with a dark gap
+        // on both sides, so the line stays visible on top of the icon
+        void strikeThrough(int16_t x, uint8_t w) {
+            int16_t x2 = x + w - 1;
             mDisplay->setDrawColor(0);
-            mDisplay->drawStr(x + 3, 8, txt);
+            mDisplay->drawLine(x, 8, x2 - 1, -1);
+            mDisplay->drawLine(x + 1, 10, x2, 1);
             mDisplay->setDrawColor(1);
-            return x;
+            mDisplay->drawLine(x, 9, x2, 0);
         }
 
         //---------------------------------------------------------------------
