@@ -301,6 +301,7 @@
                                 <div class="row mb-3">
                                     <div class="col-12 col-sm-3 my-2">{#GRAPH_SHOW_RATIO}</div>
                                     <div class="col-12 col-sm-9"><input type="number" name="disp_graph_ratio" min="0" max="100"></div>
+                                    <div class="col-12 subsubdes mt-1">{#GRAPH_RATIO_NOTE}</div>
                                 </div>
                                 <div id="graphSize"></div>
                             </div>
@@ -1332,6 +1333,7 @@
 
                 var screenSaver = document.getElementById("disp_screensaver").value;
                 setHide("graphOptions",    !optionsMap.get(dispType)[0]);
+                setHide("graphSize",       (3 != dispType)); // line position only used by the 84x48 layout
                 setHide("luminanceOption", !optionsMap.get(dispType)[1]);
                 setHide("screenSaver",     !optionsMap.get(dispType)[2]);
                 setHide("pirPin",          !(optionsMap.get(dispType)[2] && (screenSaver==2))); // show pir pin only for motion screensaver

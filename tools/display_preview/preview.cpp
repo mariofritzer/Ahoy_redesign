@@ -117,5 +117,11 @@ int main() {
     dd.utcTs = at(12, 5); dd.totalPower = 12480; dd.RadioSymbol = false;
     p.previewSetCurve(curve, posOf(dd.utcTs), dd.pGraphStartTime, dd.pGraphEndTime);
     p.disp(); savePbm(p.u8(), "06_gross_funkfehler.pbm");
+
+    // 7) no inverter configured, no radio, freshly booted (empty curve)
+    dd.nrProducing = 0; dd.nrSleeping = 0; dd.totalPower = 0; dd.totalYieldDay = 0; dd.totalYieldTotal = 0;
+    dd.RadioSymbol = false; dd.MQTTSymbol = false; dd.utcTs = at(20, 41);
+    { float z[128] = {0}; p.previewSetCurve(z, 0, dd.pGraphStartTime, dd.pGraphEndTime); }
+    p.disp(); savePbm(p.u8(), "07_kein_wechselrichter.pbm");
     return 0;
 }

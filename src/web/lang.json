@@ -450,13 +450,13 @@
                 },
                 {
                     "token": "GRAPH_OPTIONS",
-                    "en": "Graph options",
-                    "de": "Graph Einstellungen"
+                    "en": "Page switching",
+                    "de": "Seitenwechsel"
                 },
                 {
                     "token": "GRAPH_SHOW_RATIO",
-                    "en": "Graph show ratio (0-100%)",
-                    "de": "Graph Anzeigeverh&auml;ltnis (0-100%)"
+                    "en": "Share of the curve page (0&ndash;100 %)",
+                    "de": "Anteil der Kurvenseite (0&ndash;100 %)"
                 },
                 {
                     "token": "GRAPH_POSITION",
@@ -636,7 +636,7 @@
                 {
                     "token": "BTN_INV_ADD",
                     "en": "add Inverter",
-                    "de": "Wechselrichter hinzuf\u00FCgen"
+                    "de": "Wechselrichter hinzufügen"
                 },
                 {
                     "token": "INV_INPUT",
@@ -822,6 +822,11 @@
                     "token": "NO_NETWORK_FOUND",
                     "en": "no network found",
                     "de": "kein Netzwerk gefunden"
+                },
+                {
+                    "token": "GRAPH_RATIO_NOTE",
+                    "en": "The display alternates every 15 s between the main page and the day curve. 0 = main page only, 100 = curve only, 30 = approx. 10 s values / 5 s curve.",
+                    "de": "Das Display wechselt im 15-Sekunden-Takt zwischen Hauptseite und Tageskurve. 0 = nur Hauptseite, 100 = nur Kurve, 30 = ca. 10 s Werte / 5 s Kurve."
                 }
             ]
         },

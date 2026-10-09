@@ -179,7 +179,9 @@ class DisplayMono128X64 : public DisplayMono {
 
             if (0 == mDisplayData->nrSleeping + mDisplayData->nrProducing) {
                 mDisplay->setFont(u8g2_font_helvB10_tr);
-                drawKnockoutCentered("Kein Wechselrichter", xc(), 32);
+                drawHaloStr(xc() - mDisplay->getStrWidth("Willkommen") / 2, 27, "Willkommen", 2);
+                mDisplay->setFont(u8g2_font_helvB08_tr);
+                drawKnockoutCentered("Kein Wechselrichter", xc(), 39);
             }
             else if (mDisplayData->nrProducing > 0)
                 drawPowerValue();
