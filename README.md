@@ -1,69 +1,131 @@
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
-[![Ahoy Build][release-action-badge]][release-action-link] [![Ahoy Dev Build][dev-action-badge]][dev-action-link]
+[![CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de)
+[![Build](https://github.com/mariofritzer/Ahoy_redesign/actions/workflows/build_redesign.yml/badge.svg)](https://github.com/mariofritzer/Ahoy_redesign/actions/workflows/build_redesign.yml)
+[![Basis: AhoyDTU 0.8.156](https://img.shields.io/badge/Basis-AhoyDTU%200.8.156-orange.svg)](https://github.com/lumapu/ahoy/releases/tag/ahoy_v0.8.156)
 
-This work is licensed under a
-[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+# ☀️ AHOY DTU – Redesign
 
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+**Ein modernes Redesign von [AhoyDTU](https://github.com/lumapu/ahoy)**: neue Grafik für das OLED-Display mit Tagesverlauf und eine neue Weboberfläche im iOS-Stil, mit hellem und dunklem Modus.
 
-[cc-by-nc-sa]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de
-[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
-[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+<p align="center">
+  <img src="doc/redesign/display_start.png" width="380" alt="Startbildschirm">
+</p>
 
-[release-action-badge]: https://github.com/lumapu/ahoy/actions/workflows/compile_release.yml/badge.svg
-[release-action-link]: https://github.com/lumapu/ahoy/actions/workflows/compile_release.yml
+| | |
+|---|---|
+| **Basis** | AhoyDTU **0.8.156** (Release vom 12.08.2025) von [lumapu/ahoy](https://github.com/lumapu/ahoy) |
+| **Redesign** | [mariofritzer](https://github.com/mariofritzer), Oktober 2026 |
+| **Funktionsumfang** | wie AhoyDTU 0.8.156, nur Display und Weboberfläche sind neu gestaltet (Ausnahme: siehe [Unterschiede](#unterschiede-zum-original)) |
+| **Hardware** | ESP32-WROOM-32, CMT2300A (HMS/HMT) oder NRF24L01+ (HM), OLED SH1106 / SSD1306 / SSD1309 128×64 |
 
-[dev-action-badge]: https://github.com/lumapu/ahoy/actions/workflows/compile_development.yml/badge.svg
-[dev-action-link]: https://github.com/lumapu/ahoy/actions/workflows/compile_development.yml
+---
 
+## 📟 Display (128 × 64 OLED)
 
-# 🖐 Ahoy!
-![Logo](https://github.com/lumapu/ahoy/blob/main/doc/logo1_small.png?raw=true)
+| Hauptseite | Tageskurve |
+|:---:|:---:|
+| <img src="doc/redesign/display_hauptseite.png" width="380"> | <img src="doc/redesign/display_kurve.png" width="380"> |
+| Aktuelle Leistung groß, darunter die Tageskurve als Band, unten Tages- und Gesamtertrag | Kurve von Sonnenauf- bis -untergang mit Maximum und Uhrzeiten |
+| **Nacht** | **Ohne Wechselrichter** |
+| <img src="doc/redesign/display_nacht.png" width="380"> | <img src="doc/redesign/display_willkommen.png" width="380"> |
+| Wechselrichter schlafen, Kurve des Tages bleibt stehen | Willkommen-Bildschirm nach der Ersteinrichtung |
 
-This repository provides hardware and software solutions for communicating with Hoymiles inverters via radio. Our system allows you to easily obtain real-time values, such as power, current, and daily energy, as well as set parameters like the power limit of your inverter to achieve zero export. You can access these functionalities through our user-friendly web interface, MQTT, or JSON. Our solutions simplify the process of monitoring and fine-tuning your solar panel system to help you achieve your goals.
+### Statusleiste
 
-## Changelog
-[latest Release](https://github.com/lumapu/ahoy/blob/main/src/CHANGES.md)
+<img src="doc/redesign/display_statusleiste.png" width="560" alt="Statusleiste">
 
-[Development Version](https://github.com/lumapu/ahoy/blob/development03/src/CHANGES.md)
+| Symbol | Bedeutung |
+|---|---|
+| Antenne + 4 Balken | Funkverbindung zu den Wechselrichtern, mehr Balken = bessere Verbindung |
+| `[M]` | MQTT verbunden |
+| `[AP]` | Hotspot ist wirklich aktiv (gestartet und erreichbar) |
+| WLAN-Fächer | WLAN-Signal, gepunktete Bögen = schwach |
+| `[1/2]` | nur ein Teil der Wechselrichter liefert gerade Strom |
+| durchgestrichen | nicht verbunden (Funkmodul bzw. WLAN) |
 
+Links oben wechseln **IP-Adresse und Uhrzeit** in einstellbarem Takt (siehe unten).
 
-Table of approaches:
+### Weitere Details
+- Zahlen im deutschen Format (`1,24 kW`), große Ziffern, Einheiten automatisch (W/kW, Wh/kWh/MWh)
+- Tageskurve mit Sonnenauf-/-untergang aus den Koordinaten. Ohne Koordinaten gilt 05:00–21:00.
+- Die Ertragszeile überschneidet sich nie: Bei Platzmangel fallen erst die Nachkommastellen weg, dann wird die Schrift kleiner.
+- Bildschirmschoner (Bildversatz) und Bewegungssensor funktionieren wie im Original
 
-| Board  | MI | HM | HMS/HMT | comment | HowTo start |
-| ------ | -- | -- | ------- | ------- | ---------- |
-| [ESP32, C++](manual/Getting_Started.md) | ✔️ | ✔️ | ✔️ |  [create your own DTU](https://ahoydtu.de/getting_started/) |
-| ESP8266, C++ | ✔️ | ✔️ | ❌ | ⚠️ not recommended for new DTU |
+---
 
+## 🌐 Weboberfläche
 
-⚠️ **Warning: HMS-XXXXW-2T WiFi inverters are not supported. They have a 'W' in their name and a DTU serial number on its sticker**
+Neues, iOS-inspiriertes Design mit Karten, Schaltern, aufklappbaren Einstellungsgruppen und Diagrammen in Solar-Orange. Alle Funktionen sind unverändert.
 
-## Getting Started
-1. [Guide how to start with a ESP module](manual/Getting_Started.md)
+<img src="doc/redesign/web_live_desktop.png" alt="Live-Daten am Desktop">
 
-2. [ESP Webinstaller (Edge / Chrome Browser only)](https://ahoydtu.de/web_install)
+<img src="doc/redesign/web_handy.png" alt="Handy: Live-Daten, Einstellungen, Startseite">
 
-3. [Ahoy Configuration ](manual/ahoy_config.md)
+<img src="doc/redesign/web_verlauf_desktop.png" alt="Verlauf im dunklen Modus">
 
-## Our Website
-[https://ahoydtu.de](https://ahoydtu.de)
+> Der dunkle Modus wird unter *Einstellungen → Systemkonfiguration → dunkler Modus* eingeschaltet.
 
-[Firmware Archive https://fw.ahoydtu.de](https://fw.ahoydtu.de)
+---
 
-## Success Stories
-- [Getting the data into influxDB and visualize them in a Grafana Dashboard](https://grafana.com/grafana/dashboards/16850-pv-power-ahoy/) (thx @Carl)
+## ⚙️ Neue Einstellungen
 
-## Support, Feedback, Information and Discussion
-- [Discord Server (~ 7.300 Users)](https://discord.gg/WzhxEY62mB)
-- [The root of development](https://www.mikrocontroller.net/topic/525778)
+Unter *Einstellungen → Display Konfiguration → Seitenwechsel*:
 
-### Development
-If you encounter any problems, use the issue tracker on Github. Provide a detailed description of the issue and consider if it is related to our software. This will help us provide effective solutions.
+| Einstellung | Wirkung |
+|---|---|
+| **Anteil der Kurvenseite (0–100 %)** | Das Display wechselt im 15-s-Takt zwischen Hauptseite und Tageskurve. 0 = nur Hauptseite, 100 = nur Kurve, 30 = ca. 10 s / 5 s |
+| **Wechsel IP / Uhrzeit (s)** | Statusleiste zeigt abwechselnd IP und Uhrzeit, beide gleich lang. 0 = nur Uhrzeit. Standard: 5 |
 
-**Contributors are always welcome!**
+---
 
-### Related Projects
-- [OpenDTU](https://github.com/tbnobody/OpenDTU)
-  <- Our sister project ✨ for Hoymiles HM- and HMS-/HMT-series (for ESP32 only!)
-- [hms-mqtt-publisher](https://github.com/DennisOSRM/hms-mqtt-publisher)
-  <- a project which can handle WiFi inverters like HMS-XXXXW-2T
+## ⬇️ Download & Installation (OTA)
+
+1. Neueste Firmware von **[Releases → redesign-latest](https://github.com/mariofritzer/Ahoy_redesign/releases/tag/redesign-latest)** herunterladen:
+   - `…_esp32-wroom32-de.bin` → deutsche Oberfläche
+   - `…_esp32-wroom32.bin` → englische Oberfläche
+2. **Vorher Einstellungen sichern:** *Einstellungen → Export*
+3. In der Ahoy-Weboberfläche unter **Update** die `.bin` hochladen. Bei einem Wechsel zwischen deutscher und englischer Variante erscheint ein Hinweis, dann auf *Weiter* klicken.
+4. Nach dem Neustart die Seite mit **Strg+F5** neu laden (Browser-Cache)
+
+Zurück zum Original geht jederzeit per Update mit einer offiziellen Firmware von [fw.ahoydtu.de](https://fw.ahoydtu.de).
+
+> Die Firmware bleibt automatisch geprüft unter der OTA-Grenze von 1.306.624 Bytes (Partition 0x140000 minus 4 KB), mit mindestens 8 KB Reserve.
+
+---
+
+## Unterschiede zum Original
+
+- **Ethernet ist in den `esp32-wroom32`-Varianten deaktiviert**, um Speicher für das Update zu sparen. Die Standard-Pins des CMT2300A (SDIO 14, SCLK 12) überschneiden sich ohnehin mit dem Ethernet-SPI. Wer Ethernet braucht, nimmt die Original-Firmware.
+- Die Option „Graph Position“ ist für 128×64-Displays ausgeblendet. Das neue Layout positioniert die Kurve selbst.
+
+### Standard-Pins (esp32-wroom32)
+
+| CMT2300A | GPIO | | NRF24L01+ | GPIO |
+|---|---|---|---|---|
+| CSB | 27 | | CS | 5 |
+| FCSB | 26 | | CE | 17 |
+| IRQ (GPIO3) | 34 | | IRQ | 16 |
+| SDIO | 14 | | MISO / MOSI | 19 / 23 |
+| SCLK | 12 | | SCLK | 18 |
+
+---
+
+## 🛠 Selbst bauen & Werkzeuge
+
+- **Automatischer Build:** Jeder Push auf `main` oder `modern-ui` baut die Firmware über GitHub Actions ([Workflow](.github/workflows/build_redesign.yml)) und aktualisiert das Release `redesign-latest`.
+- **Lokal:** VS Code + PlatformIO, Ordner `src`, Umgebung `esp32-wroom32-de`
+- **Display-Vorschau am PC:** [`tools/display_preview`](tools/display_preview) rendert den echten Display-Code mit der u8g2-Bibliothek als Bilder.
+- **Web-Vorschau:** [`tools/web_preview/server.py`](tools/web_preview/server.py) startet die Weboberfläche lokal mit Beispieldaten.
+- **Icons:** [`tools/display_icons/make_icons.py`](tools/display_icons/make_icons.py) erzeugt die Display-Symbole aus Pixel-Art.
+
+---
+
+## 🙏 Credits & Lizenz
+
+Dieses Projekt basiert vollständig auf **[AhoyDTU](https://github.com/lumapu/ahoy)** von lumapu und allen Mitwirkenden. Danke für die großartige Arbeit! Die originale Projektbeschreibung findest du in [doc/README_ahoy_original.md](doc/README_ahoy_original.md), Dokumentation unter [docs.ahoydtu.de](https://docs.ahoydtu.de).
+
+Wie das Original steht auch dieses Redesign unter der
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de). **Nicht-kommerzielle Nutzung**, Weitergabe nur unter gleichen Bedingungen und mit Namensnennung.
+
+[![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de)
+
+*Redesign by mariofritzer*
