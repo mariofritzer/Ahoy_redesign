@@ -89,15 +89,51 @@ class DisplayMono128X64 : public DisplayMono {
         inline int16_t xc(void) { return mDispWidth / 2 + mPixelshift; }      // center
 
         //---------------------------------------------------------------------
+#ifndef SPLASH_SIGN_GAP
+#define SPLASH_SIGN_GAP 2
+#endif
+#ifndef SPLASH_SIGN_FONT
+#define SPLASH_SIGN_FONT u8g2_font_luIS10_tr
+#endif
         void drawSplash(void) {
             mDisplay->clearBuffer();
-            mDisplay->drawXBMP((mDispWidth - ICON_SUN_BIG_W) / 2, 4, ICON_SUN_BIG_W, ICON_SUN_BIG_H, icon_sun_big);
-            mDisplay->setFont(u8g2_font_helvB10_tr);
-            drawCentered("AhoyDTU", mDispWidth / 2, 40);
-            mDisplay->setFont(u8g2_font_helvB08_tr);
-            snprintf(mFmtText, DISP_FMT_TEXT_LEN, "Version %s", (nullptr != mDisplayData->version) ? mDisplayData->version : "");
-            drawCentered(mFmtText, mDispWidth / 2, 56);
+
+            // title
+            mDisplay->setFont(u8g2_font_helvB12_tr);
+            drawCentered("AHOY DTU", mDispWidth / 2, 16);
+            mDisplay->drawHLine(mDispWidth / 2 - 32, 20, 64);
+
+            // version, small, below the title
+            mDisplay->setFont(u8g2_font_4x6_tr);
+            snprintf(mFmtText, DISP_FMT_TEXT_LEN, "v%s", (nullptr != mDisplayData->version) ? mDisplayData->version : "");
+            drawCentered(mFmtText, mDispWidth / 2, 28);
+
+            // signature, "scribbled": every letter jumps a little up or down
+            mDisplay->setFont(SPLASH_SIGN_FONT);
+            // letter positions computed with tools/display_preview/kerning.c -> equal gaps between all letters
+#if (SPLASH_SIGN_GAP == 1)
+            static const int8_t posA[] = {-2, 6, 13, 22, 29, 35, 40, 49, 49, 59, 68};      // width 77
+            static const int8_t posB[] = {-1, 12, 19, 26, 31, 39, 46, 53, 58, 64, 72, 78}; // width 86
+            const int16_t wB = 86;
+#else
+            static const int8_t posA[] = {-2, 7, 15, 25, 33, 40, 46, 56, 56, 70, 80};      // width 89
+            static const int8_t posB[] = {-1, 13, 21, 29, 35, 44, 52, 60, 66, 73, 82, 89}; // width 97
+            const int16_t wB = 97;
+#endif
+            drawScribble("redesign by", posA, 4, 44, 0);
+            drawScribble("mariofritzer", posB, mDispWidth - 3 - wB, 59, 3);
             mDisplay->sendBuffer();
+        }
+
+        // draws text letter by letter at fixed x positions with a small vertical jitter -> handwritten look
+        void drawScribble(const char *txt, const int8_t *pos, int16_t x, int16_t y, uint8_t seed) {
+            static const int8_t jitter[] = {0, -1, 0, 1, 1, 0, -1, 0, 1, -1, 0, 1};
+            char c[2] = {0, 0};
+            for (uint8_t i = 0; txt[i]; i++) {
+                if (' ' == txt[i]) continue;
+                c[0] = txt[i];
+                mDisplay->drawStr(x + pos[i], y + jitter[(i + seed) % sizeof(jitter)], c);
+            }
         }
 
         //---------------------------------------------------------------------
@@ -113,62 +149,83 @@ class DisplayMono128X64 : public DisplayMono {
                 snprintf(mFmtText, DISP_FMT_TEXT_LEN, "--:--");
             drawKnockoutStr(x0() + 1, Y_STATUS, mFmtText);
 
-            int16_t x = x1();
+            // icons from right to left. rule: normal = white icon, problem = inverted box
+            int16_t x = x1() + 1;
 
-            // WiFi: 3 arcs + dot, unlit arcs are drawn dimmed (dithered)
-            x -= ICON_WIFI_DOT_W - 1;
-            int8_t wl = 0;
+            // WiFi: 3 bold arcs + dot, unlit arcs dimmed (dithered)
+            x -= ICON_WIFI_DOT_W;
             if (mDisplayData->WifiSymbol) {
-                wl = 1;
+                int8_t wl = 1;
                 if (mDisplayData->WifiRSSI > -80) wl = 2;
                 if (mDisplayData->WifiRSSI > -70) wl = 3;
                 if (mDisplayData->WifiRSSI > -60) wl = 4;
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_dot,   true);
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_in,    wl >= 2);
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_mid,   wl >= 3);
+                drawLevelIcon(x, 0, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_outer, wl >= 4);
+            } else {
+                x += ICON_WIFI_DOT_W;
+                x = problemBadge(x, "WLAN");   // no WiFi connection
             }
-            knockoutBox(x - 1, 0, ICON_WIFI_DOT_W + 2, 10);
-            drawLevelIcon(x, 1, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_dot,   wl >= 1);
-            drawLevelIcon(x, 1, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_in,    wl >= 2);
-            drawLevelIcon(x, 1, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_mid,   wl >= 3);
-            drawLevelIcon(x, 1, ICON_WIFI_DOT_W, ICON_WIFI_DOT_H, icon_wifi_outer, wl >= 4);
-            if (!mDisplayData->WifiSymbol)
-                mDisplay->drawLine(x + 1, 8, x + ICON_WIFI_DOT_W - 2, 1);  // strike through
 
-            // MQTT: small cloud
+            // hotspot (access point) active: "AP" in a rounded frame
+            if (mDisplayData->APSymbol) {
+                mDisplay->setFont(u8g2_font_5x7_tr);
+                x -= 3 + 14;
+                mDisplay->drawRFrame(x, 0, 14, 10, 2);
+                mDisplay->drawStr(x + 2, 8, "AP");
+            }
+
+            // MQTT: "M" in a rounded frame, only when connected
             if (mDisplayData->MQTTSymbol) {
-                x -= ICON_CLOUD_W + 3;
-                knockoutBox(x - 1, 0, ICON_CLOUD_W + 2, 10);
-                mDisplay->drawXBMP(x, 2, ICON_CLOUD_W, ICON_CLOUD_H, icon_cloud);
+                mDisplay->setFont(u8g2_font_5x7_tr);
+                x -= 4 + 9;
+                mDisplay->drawRFrame(x, 0, 9, 10, 2);
+                mDisplay->drawStr(x + 2, 8, "M");
             }
 
-            // radio quality: 4 bars like a mobile phone
-            x -= 4 * 3 + 3;
+            // radio to the inverters: antenna + 4 bars like a mobile phone
+            x -= 4 + 4 * 3 - 1;
             int16_t xBars = x;
-            knockoutBox(x - 1, 0, 4 * 3 + 1, 10);
-            for (uint8_t i = 0; i < 4; i++) {
-                uint8_t h = 2 + i * 2;
-                int16_t bx = x + i * 3;
-                bool lit = mDisplayData->RadioSymbol && (mDisplayData->RadioRSSI > (-60 - (3 - i) * 10));
-                if (lit)
-                    mDisplay->drawBox(bx, 9 - h, 2, h);
-                else
-                    mDisplay->drawPixel(bx, 8);   // unlit bar: only a dot on the baseline
-            }
-            if (!mDisplayData->RadioSymbol) {      // radio module not working: small cross
-                mDisplay->drawLine(x + 7, 1, x + 11, 5);
-                mDisplay->drawLine(x + 11, 1, x + 7, 5);
+            if (mDisplayData->RadioSymbol) {
+                for (uint8_t i = 0; i < 4; i++) {
+                    uint8_t h = 3 + i * 2;   // 3, 5, 7, 9
+                    int16_t bx = x + i * 3;
+                    bool lit = (mDisplayData->RadioRSSI > (-60 - (3 - i) * 10));
+                    if (lit)
+                        mDisplay->drawBox(bx, 10 - h, 2, h);
+                    else
+                        mDisplay->drawBox(bx, 9, 2, 1);   // unlit bar: short line on the baseline
+                }
+                x -= ICON_ANTENNA_W + 1;
+                mDisplay->drawXBMP(x, 0, ICON_ANTENNA_W, ICON_ANTENNA_H, icon_antenna);
+            } else {
+                x = problemBadge(xBars + 4 * 3 - 1, "FUNK");   // radio module not found / not working
             }
 
-            // some inverters sleeping: small inverted badge "producing/total"
+            // some inverters sleeping: framed badge "producing/total"
             if ((mDisplayData->nrSleeping > 0) && (mDisplayData->nrProducing > 0)) {
                 mDisplay->setFont(u8g2_font_5x7_tr);
                 snprintf(mFmtText, DISP_FMT_TEXT_LEN, "%d/%d", mDisplayData->nrProducing,
                          mDisplayData->nrProducing + mDisplayData->nrSleeping);
                 uint8_t w = mDisplay->getStrWidth(mFmtText);
-                int16_t bx = xBars - w - 8;
-                mDisplay->drawRBox(bx, 0, w + 5, 9, 2);
-                mDisplay->setDrawColor(0);
-                mDisplay->drawStr(bx + 3, 7, mFmtText);
-                mDisplay->setDrawColor(1);
+                int16_t bx = x - w - 9;
+                mDisplay->drawRFrame(bx, 0, w + 5, 10, 2);
+                mDisplay->drawStr(bx + 3, 8, mFmtText);
             }
+        }
+
+        // inverted rounded badge with a short word, right edge at xRight (= problem)
+        // returns the new left edge
+        int16_t problemBadge(int16_t xRight, const char *txt) {
+            mDisplay->setFont(u8g2_font_5x7_tr);
+            uint8_t w = mDisplay->getStrWidth(txt) + 5;
+            int16_t x = xRight - w + 1;
+            mDisplay->drawRBox(x, 0, w, 10, 2);
+            mDisplay->setDrawColor(0);
+            mDisplay->drawStr(x + 3, 8, txt);
+            mDisplay->setDrawColor(1);
+            return x;
         }
 
         //---------------------------------------------------------------------

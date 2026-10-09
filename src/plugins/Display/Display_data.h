@@ -16,6 +16,7 @@ struct DisplayData {
     bool WifiSymbol = false;    // indicate if WiFi is connected
     bool RadioSymbol = false;   // indicate if radio module is connecting and working
     bool MQTTSymbol = false;    // indicate if MQTT is connected
+    bool APSymbol = false;      // indicate if the hotspot (access point) is active
     int8_t WifiRSSI=SCHAR_MIN;  // indicate RSSI value for WiFi
     int8_t RadioRSSI=SCHAR_MIN; // indicate RSSI value for radio
     IPAddress ipAddress;        // indicate ip adress of ahoy

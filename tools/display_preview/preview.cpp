@@ -120,8 +120,14 @@ int main() {
 
     // 7) no inverter configured, no radio, freshly booted (empty curve)
     dd.nrProducing = 0; dd.nrSleeping = 0; dd.totalPower = 0; dd.totalYieldDay = 0; dd.totalYieldTotal = 0;
-    dd.RadioSymbol = false; dd.MQTTSymbol = false; dd.utcTs = at(20, 41);
+    dd.RadioSymbol = false; dd.MQTTSymbol = false; dd.APSymbol = true; dd.utcTs = at(20, 41);
     { float z[128] = {0}; p.previewSetCurve(z, 0, dd.pGraphStartTime, dd.pGraphEndTime); }
     p.disp(); savePbm(p.u8(), "07_kein_wechselrichter.pbm");
+
+    // 8) producing, but WiFi lost and radio module failing
+    dd.nrProducing = 1; dd.nrSleeping = 0; dd.totalPower = 734; dd.totalYieldDay = 3120; dd.totalYieldTotal = 2841.0;
+    dd.WifiSymbol = false; dd.RadioSymbol = true; dd.RadioRSSI = -75; dd.APSymbol = true; dd.MQTTSymbol = false; dd.utcTs = at(11, 17);
+    p.previewSetCurve(curve, posOf(dd.utcTs), dd.pGraphStartTime, dd.pGraphEndTime);
+    p.disp(); savePbm(p.u8(), "08_kein_wlan.pbm");
     return 0;
 }

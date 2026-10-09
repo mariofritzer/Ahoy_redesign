@@ -177,6 +177,7 @@ class Display {
             mDisplayData.RadioSymbol = (nrf_ok && !cmt_en) || (cmt_ok && !nrf_en) || (nrf_ok && cmt_ok);
             mDisplayData.WifiSymbol = (WiFi.status() == WL_CONNECTED);
             mDisplayData.MQTTSymbol = mApp->getMqttIsConnected();
+            mDisplayData.APSymbol = (0 != (WiFi.getMode() & WIFI_AP));
             mDisplayData.RadioRSSI = ivQuality2RadioRSSI(minQAllInv); // Workaround as NRF24 has no RSSI. Approximation by quality levels from heuristic function
             mDisplayData.WifiRSSI = (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : SCHAR_MIN;
             mDisplayData.ipAddress = WiFi.localIP();
