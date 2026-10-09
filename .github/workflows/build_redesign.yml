@@ -10,6 +10,9 @@ on:
       - '**.md'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build ${{ matrix.variant }}
@@ -40,18 +43,48 @@ jobs:
           pip install --upgrade platformio
 
       - name: Build
-        run: pio run -d src -e ${{ matrix.variant }}
+        run: pio run -d src -e ${{ matrix.variant }} | tee build.log
 
-      - name: Collect firmware
+      - name: Check size and collect firmware
         run: |
           mkdir -p out
-          cp src/.pio/build/${{ matrix.variant }}/firmware.bin out/firmware_${{ matrix.variant }}_OTA.bin
-          ls -la out
-          SIZE=$(stat -c %s out/firmware_${{ matrix.variant }}_OTA.bin)
-          echo "### ${{ matrix.variant }}: $SIZE Bytes" >> $GITHUB_STEP_SUMMARY
+          BIN=out/firmware_${{ matrix.variant }}_OTA.bin
+          cp src/.pio/build/${{ matrix.variant }}/firmware.bin $BIN
+          SIZE=$(stat -c %s $BIN)
+          MAX=1310720   # app partition of the lolin_d32 default partition table (0x140000)
+          PCT=$(( SIZE * 100 / MAX ))
+          FLASH=$(grep -E "^(RAM|Flash):" build.log | tr '\n' ' ')
+          echo "::notice title=${{ matrix.variant }}::firmware.bin ${SIZE} of ${MAX} bytes (${PCT}%) | ${FLASH}"
+          echo "### ${{ matrix.variant }}: ${SIZE} / ${MAX} Bytes (${PCT} %)" >> $GITHUB_STEP_SUMMARY
+          if [ $SIZE -gt $MAX ]; then echo "::error::firmware too large for OTA partition"; exit 1; fi
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.variant }}
           path: out/*.bin
+
+  release:
+    name: Publish download
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.ref_name == 'modern-ui' || github.ref_name == 'main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Update rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=redesign-latest
+          SHA=$(git rev-parse --short HEAD)
+          NOTES="Automatischer Build vom Branch ${{ github.ref_name }} (Commit ${SHA}, $(date -u +'%Y-%m-%d %H:%M UTC')).
+
+          Für das OTA-Update in der Ahoy-Weboberfläche unter Update die passende Datei hochladen:
+          - firmware_esp32-wroom32-de_OTA.bin  (deutsche Oberfläche)
+          - firmware_esp32-wroom32_OTA.bin     (englische Oberfläche)"
+          gh release delete $TAG --yes --cleanup-tag 2>/dev/null || true
+          gh release create $TAG out/*.bin --prerelease --target ${{ github.sha }} --title "Ahoy Redesign (${SHA})" --notes "$NOTES"

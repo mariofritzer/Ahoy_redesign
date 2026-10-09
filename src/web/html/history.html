@@ -62,14 +62,12 @@
                 return mlNs("svg", {class: "container", id: id+"_svg", viewBox: "0 0 "+String(n*2+50)+" "+String(height+20), width: "100%", height: "100%"}, [
                     mlNs("defs", {}, [
                         mlNs("linearGradient", {id: "gLine", x1: 0, y1: 0, x2: 0, y2: "100%"}, [
-                            mlNs("stop", {offset: 0, "stop-color": "#006ec0"}),
-                            mlNs("stop", {offset: "80%", "stop-color": "#5050ff"}),
-                            mlNs("stop", {offset: "100%", "stop-color": "gray"})
+                            mlNs("stop", {offset: 0, "stop-color": "#ff9500"}),
+                            mlNs("stop", {offset: "100%", "stop-color": "#ffb340"})
                         ]),
                         mlNs("linearGradient", {id: "gFill", x1: 0, y1: 0, x2: 0, y2: "100%"}, [
-                            mlNs("stop", {offset: 0, "stop-color": "#006ec0"}),
-                            mlNs("stop", {offset: "50%", "stop-color": "#0034c0"}),
-                            mlNs("stop", {offset: "100%", "stop-color": "#e0e0e0"})
+                            mlNs("stop", {offset: 0, "stop-color": "#ff9500", "stop-opacity": 0.45}),
+                            mlNs("stop", {offset: "100%", "stop-color": "#ff9500", "stop-opacity": 0.02})
                         ])
                     ]),
                     ...gridText(n*2, scale),
